@@ -11,17 +11,19 @@ class MaskedLinear(nn.Linear):
         self.mask_flag = False
     
     def set_mask(self, mask):
-        self.mask = to_var(mask, requires_grad=False)
-        self.weight.data = self.weight.data*self.mask.data
+        self.register_buffer('mask', mask)
+        mask_var = self.get_mask()
+        self.weight.data = self.weight.data*mask_var.data
         self.mask_flag = True
     
     def get_mask(self):
-        print(self.mask_flag)
-        return self.mask
+        # print(self.mask_flag)
+        return to_var(self.mask, requires_grad=False)
     
     def forward(self, x):
         if self.mask_flag == True:
-            weight = self.weight*self.mask
+            mask_var = self.get_mask()
+            weight = self.weight * mask_var
             return F.linear(x, weight, self.bias)
         else:
             return F.linear(x, self.weight, self.bias)
@@ -35,17 +37,24 @@ class MaskedConv2d(nn.Conv2d):
         self.mask_flag = False
     
     def set_mask(self, mask):
-        self.mask = to_var(mask, requires_grad=False)
-        self.weight.data = self.weight.data*self.mask.data
+        self.register_buffer('mask', mask)
+        mask_var = self.get_mask()
+        # print('mask shape: {}'.format(self.mask.data.size()))
+        # print('weight shape {}'.format(self.weight.data.size()))
+        self.weight.data = self.weight.data*mask_var.data
         self.mask_flag = True
     
     def get_mask(self):
-        print(self.mask_flag)
-        return self.mask
+        # print(self.mask_flag)
+        return to_var(self.mask, requires_grad=False)
     
     def forward(self, x):
         if self.mask_flag == True:
-            weight = self.weight*self.mask
+            mask_var = self.get_mask()
+            # print(self.weight)
+            # print(self.mask)
+            # print('weight/mask id: {} {}'.format(self.weight.get_device(), mask_var.get_device()))
+            weight = self.weight * mask_var
             return F.conv2d(x, weight, self.bias, self.stride,
                         self.padding, self.dilation, self.groups)
         else:

@@ -47,6 +47,7 @@ test(net, loader_test)
 # prune the weights
 masks = weight_prune(net, param['pruning_perc'])
 net.set_masks(masks)
+net = nn.DataParallel(net).cuda()
 print("--- {}% parameters pruned ---".format(param['pruning_perc']))
 test(net, loader_test)
 
