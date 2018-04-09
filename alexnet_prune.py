@@ -127,8 +127,13 @@ def main():
     cudnn.benchmark = True
 
     # Data loading code
+<<<<<<< Updated upstream
     traindir = os.path.join(args.data, 'ILSVRC2012_img_train_pytorch')
     valdir = os.path.join(args.data, 'ILSVRC2012_img_val_pytorch')
+=======
+    traindir = os.path.join(args.data, 'ILSVRC2012_img_train')
+    valdir = os.path.join(args.data, 'ILSVRC2012_img_val_sorted')
+>>>>>>> Stashed changes
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
@@ -176,7 +181,7 @@ def main():
         adjust_learning_rate(optimizer, epoch)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch, args.logfolder)
+        train(train_loader, model, criterion, optimizer, epoch)
 
         # evaluate on validation set
         prec1 = validate(val_loader, model, criterion)
@@ -190,14 +195,14 @@ def main():
             'state_dict': model.state_dict(),
             'best_prec1': best_prec1,
             'optimizer': optimizer.state_dict(),
-        }, is_best, path=args.logfolder)
+        }, is_best)
 
     print("--- After retraining ---")
     prune_rate(model)
-    torch.save(model.state_dict(), os.path.join(args.logfolder, 'alexnet_pruned.pkl')
+    torch.save(model.state_dict(), os.path.join(args.logfolder, 'alexnet_pruned.pkl'))
 
 
-def train(train_loader, model, criterion, optimizer, epoch, path):
+def train(train_loader, model, criterion, optimizer, epoch):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
