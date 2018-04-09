@@ -127,13 +127,8 @@ def main():
     cudnn.benchmark = True
 
     # Data loading code
-<<<<<<< Updated upstream
-    traindir = os.path.join(args.data, 'ILSVRC2012_img_train_pytorch')
-    valdir = os.path.join(args.data, 'ILSVRC2012_img_val_pytorch')
-=======
     traindir = os.path.join(args.data, 'ILSVRC2012_img_train')
     valdir = os.path.join(args.data, 'ILSVRC2012_img_val_sorted')
->>>>>>> Stashed changes
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
