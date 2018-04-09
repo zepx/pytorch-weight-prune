@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 import time
+import sys
 
 import torch
 import torch.nn as nn
@@ -85,7 +86,8 @@ def main():
         model = alexnet(pretrained=True)
     else:
         print("=> creating model '{}'".format(args.arch))
-        model = models.__dict__[args.arch]()
+        # model = models.__dict__[args.arch]()
+        model = alexnet(pretrained=True)
     
 
     if not args.distributed:
@@ -110,12 +112,16 @@ def main():
         if os.path.isfile(args.resume):
             print("=> loading checkpoint '{}'".format(args.resume))
             checkpoint = torch.load(args.resume)
+            params = {k: v for k, v in checkpoint['state_dict'].items() if 'mask' not in k}
+            mask_params = {k: v for k, v in checkpoint['state_dict'].items() if 'mask' in k}
             args.start_epoch = checkpoint['epoch']
             best_prec1 = checkpoint['best_prec1']
-            model.load_state_dict(checkpoint['state_dict'])
+            model.load_state_dict(params)
+            model.set_masks(list(mask_params.values()))
             optimizer.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
+            prune_rate(model)
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
     else:
@@ -165,7 +171,7 @@ def main():
     if args.evaluate:
         validate(val_loader, model, criterion)
         return
-    if pruning:
+    if pruning and not args.resume:
         # Prune weights validation
         print("--- {}% parameters pruned ---".format(args.prune))
         validate(val_loader, model, criterion)
@@ -190,7 +196,7 @@ def main():
             'state_dict': model.state_dict(),
             'best_prec1': best_prec1,
             'optimizer': optimizer.state_dict(),
-        }, is_best)
+        }, is_best, path=args.logfolder)
 
     print("--- After retraining ---")
     prune_rate(model)
