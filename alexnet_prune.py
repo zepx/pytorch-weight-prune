@@ -194,7 +194,7 @@ def main():
 
     print("--- After retraining ---")
     prune_rate(model)
-    torch.save(model.state_dict(), 'models/alexnet_pruned.pkl')
+    torch.save(model.state_dict(), os.path.join(args.logfolder, 'alexnet_pruned.pkl')
 
 
 def train(train_loader, model, criterion, optimizer, epoch, path):
@@ -294,7 +294,7 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar', path=''):
     filepath = os.path.join(path, filename)
     torch.save(state, filepath)
     if is_best:
-        shutil.copyfile(filepath, os.join(path, 'model_best.pth.tar'))
+        shutil.copyfile(filepath, os.path.join(path, 'model_best.pth.tar'))
 
 
 class AverageMeter(object):
