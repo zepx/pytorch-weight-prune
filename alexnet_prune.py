@@ -64,6 +64,8 @@ parser.add_argument('--prune', default=90., type=float,
                     help='Pruning percentage')
 parser.add_argument('--logfolder', default='', type=str,
                     help='Output Log and Chkpoint folder')
+parser.add_argument('--snapshot', default=1000, type=int,
+                    help='Snapshot frequency')
 
 best_prec1 = 0
 
@@ -204,6 +206,7 @@ def main():
 
 
 def train(train_loader, model, criterion, optimizer, epoch):
+    global args, best_prec1
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -250,6 +253,14 @@ def train(train_loader, model, criterion, optimizer, epoch):
                   'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
                       epoch, i, len(train_loader), batch_time=batch_time,
                       data_time=data_time, loss=losses, top1=top1, top5=top5))
+        if i % args.snapshot == 0 and i > 0:
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'arch': args.arch,
+                'state_dict': model.state_dict(),
+                'best_prec1': best_prec1,
+                'optimizer': optimizer.state_dict(),
+            }, False, filename='checkpoint_iter.pth.tar', path=args.logfolder)
 
 
 def validate(val_loader, model, criterion):
