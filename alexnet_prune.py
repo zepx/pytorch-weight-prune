@@ -74,6 +74,7 @@ def main():
     global args, best_prec1
     args = parser.parse_args()
     pruning = False
+    chkpoint = False
 
     args.distributed = args.world_size > 1
 
@@ -89,7 +90,7 @@ def main():
     else:
         print("=> creating model '{}'".format(args.arch))
         # model = models.__dict__[args.arch]()
-        model = alexnet(pretrained=True)
+        model = alexnet(pretrained=False)
     
 
     if not args.distributed:
@@ -117,6 +118,7 @@ def main():
             params = {k: v for k, v in checkpoint['state_dict'].items() if 'mask' not in k}
             mask_params = {k: v for k, v in checkpoint['state_dict'].items() if 'mask' in k}
             args.start_epoch = checkpoint['epoch']
+            # saved_iter = checkpoint['iter']
             best_prec1 = checkpoint['best_prec1']
             model.load_state_dict(params)
             model.set_masks(list(mask_params.values()))
@@ -124,10 +126,13 @@ def main():
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
             prune_rate(model)
+            chkpoint = True
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
-    else:
+    
+    if args.prune > 0 and not chkpoint:
         # prune
+        print("=> pruning...")
         masks = weight_prune(model, args.prune)
         model.set_masks(masks)
         pruning = True
@@ -173,7 +178,7 @@ def main():
     if args.evaluate:
         validate(val_loader, model, criterion)
         return
-    if pruning and not args.resume:
+    if pruning and not chkpoint:
         # Prune weights validation
         print("--- {}% parameters pruned ---".format(args.prune))
         validate(val_loader, model, criterion)
@@ -198,6 +203,7 @@ def main():
             'state_dict': model.state_dict(),
             'best_prec1': best_prec1,
             'optimizer': optimizer.state_dict(),
+            'iter': 0,
         }, is_best, path=args.logfolder)
 
     print("--- After retraining ---")
@@ -260,6 +266,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                 'state_dict': model.state_dict(),
                 'best_prec1': best_prec1,
                 'optimizer': optimizer.state_dict(),
+                'iter': i,
             }, False, filename='checkpoint_iter.pth.tar', path=args.logfolder)
 
 
