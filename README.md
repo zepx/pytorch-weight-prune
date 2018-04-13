@@ -1,6 +1,10 @@
+# Repository Features
+
+The goal of this repository is to apply Pruning for AlexNet and potentially, future models. At present, the original implementation does not work with multiple-gpu, which has been fixed in this repository.
+
 # Neural Network Pruning PyTorch Implementation
 
-Luyu Wang & Gavin Ding
+Original Authors: Luyu Wang & Gavin Ding
 
 Borealis AI
 
