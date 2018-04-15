@@ -18,6 +18,7 @@ import torchvision.models as models
 from alexnet_mod import alexnet
 from pruning.methods import weight_prune
 from pruning.utils import prune_rate
+from imagenet_seq.data import Loader
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -140,19 +141,21 @@ def main():
     cudnn.benchmark = True
 
     # Data loading code
-    traindir = os.path.join(args.data, 'ILSVRC2012_img_train')
-    valdir = os.path.join(args.data, 'ILSVRC2012_img_val_sorted')
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
+    traindir = os.path.join(args.data, 'ilsvrc12_train_lmdb_224_pytorch')
+    valdir = os.path.join(args.data, 'ilsvrc12_val_lmdb_224_pytorch')
+    # traindir = os.path.join(args.data, 'ILSVRC2012_img_train')
+    # valdir = os.path.join(args.data, 'ILSVRC2012_img_val_sorted')
+    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     # std=[0.229, 0.224, 0.225])
 
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            normalize,
-        ]))
+    # train_dataset = datasets.ImageFolder(
+        # traindir,
+        # transforms.Compose([
+            # transforms.RandomResizedCrop(224),
+            # transforms.RandomHorizontalFlip(),
+            # transforms.ToTensor(),
+            # normalize,
+        # ]))
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(
@@ -160,20 +163,23 @@ def main():
     else:
         train_sampler = None
 
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=(
-            train_sampler is None),
-        num_workers=args.workers, pin_memory=True, sampler=train_sampler)
+    # train_loader = torch.utils.data.DataLoader(
+        # train_dataset, batch_size=args.batch_size, shuffle=(
+            # train_sampler is None),
+        # num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
-    val_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(valdir, transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            normalize,
-        ])),
-        batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True)
+    train_loader = Loader('train', traindir, batch_size=args.batch_size, num_workers=args.workers, cuda=True)
+    val_loader = Loader('val', valdir, batch_size=args.batch_size, num_workers=args.workers, cuda=True)
+
+    # val_loader = torch.utils.data.DataLoader(
+        # datasets.ImageFolder(valdir, transforms.Compose([
+            # transforms.Resize(256),
+            # transforms.CenterCrop(224),
+            # transforms.ToTensor(),
+            # normalize,
+        # ])),
+        # batch_size=args.batch_size, shuffle=False,
+        # num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
         validate(val_loader, model, criterion)
