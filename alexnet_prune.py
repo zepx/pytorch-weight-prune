@@ -67,6 +67,8 @@ parser.add_argument('--logfolder', default='', type=str,
                     help='Output Log and Chkpoint folder')
 parser.add_argument('--snapshot', default=1000, type=int,
                     help='Snapshot frequency')
+parser.add_argument('--iterative', action='store_true',
+                    help='Resets epoch and perform pruning')
 
 best_prec1 = 0
 
@@ -127,7 +129,11 @@ def main():
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
             prune_rate(model)
-            chkpoint = True
+            if not args.iterative:
+                chkpoint = True
+            else:
+                args.start_epoch = 1
+                best_prec1 = 0
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
     
@@ -187,6 +193,7 @@ def main():
     if pruning and not chkpoint:
         # Prune weights validation
         print("--- {}% parameters pruned ---".format(args.prune))
+        prune_rate(model)
         validate(val_loader, model, criterion)
 
     for epoch in range(args.start_epoch, args.epochs):
