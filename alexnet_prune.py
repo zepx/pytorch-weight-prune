@@ -69,6 +69,8 @@ parser.add_argument('--snapshot', default=1000, type=int,
                     help='Snapshot frequency')
 parser.add_argument('--iterative', action='store_true',
                     help='Resets epoch and perform pruning')
+parser.add_argument('--validate', action='store_true',
+                    help='Validate accuracy on resume')
 
 best_prec1 = 0
 
@@ -78,6 +80,17 @@ def main():
     args = parser.parse_args()
     pruning = False
     chkpoint = False
+
+    # Data loading code
+    traindir = os.path.join(args.data, 'ilsvrc12_train_lmdb_224_pytorch')
+    valdir = os.path.join(args.data, 'ilsvrc12_val_lmdb_224_pytorch')
+    # traindir = os.path.join(args.data, 'ILSVRC2012_img_train')
+    # valdir = os.path.join(args.data, 'ILSVRC2012_img_val_sorted')
+    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     # std=[0.229, 0.224, 0.225])
+
+    train_loader = Loader('train', traindir, batch_size=args.batch_size, num_workers=args.workers, cuda=True)
+    val_loader = Loader('val', valdir, batch_size=args.batch_size, num_workers=args.workers, cuda=True)
 
     args.distributed = args.world_size > 1
 
@@ -129,6 +142,9 @@ def main():
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
             prune_rate(model)
+            if args.validate:
+                validate(val_loader, model, criterion)
+
             if not args.iterative:
                 chkpoint = True
             else:
@@ -146,13 +162,6 @@ def main():
 
     cudnn.benchmark = True
 
-    # Data loading code
-    traindir = os.path.join(args.data, 'ilsvrc12_train_lmdb_224_pytorch')
-    valdir = os.path.join(args.data, 'ilsvrc12_val_lmdb_224_pytorch')
-    # traindir = os.path.join(args.data, 'ILSVRC2012_img_train')
-    # valdir = os.path.join(args.data, 'ILSVRC2012_img_val_sorted')
-    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     # std=[0.229, 0.224, 0.225])
 
     # train_dataset = datasets.ImageFolder(
         # traindir,
@@ -174,8 +183,6 @@ def main():
             # train_sampler is None),
         # num_workers=args.workers, pin_memory=True, sampler=train_sampler)
 
-    train_loader = Loader('train', traindir, batch_size=args.batch_size, num_workers=args.workers, cuda=True)
-    val_loader = Loader('val', valdir, batch_size=args.batch_size, num_workers=args.workers, cuda=True)
 
     # val_loader = torch.utils.data.DataLoader(
         # datasets.ImageFolder(valdir, transforms.Compose([
