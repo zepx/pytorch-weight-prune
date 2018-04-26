@@ -5,6 +5,7 @@ The goal of this repository is to apply Pruning for AlexNet and potentially, fut
 # Neural Network Pruning PyTorch Implementation
 
 Original Authors: Luyu Wang & Gavin Ding
+Original Repository: https://github.com/wanglouis49/pytorch-weights_pruning.
 
 Borealis AI
 
